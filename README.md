@@ -1,3 +1,5 @@
+**English** | [فارسی](README.fa.md)
+
 # EdgeRelay
 
 A single-file **Cloudflare Workers & Pages** WebSocket reverse proxy and multi-profile subscription generator with a self-contained web admin panel, supporting **Sing-box**, **Xray**, **Patterniha F&F (`cs` / `fm`)**, and **ECH + Custom DNS**.
