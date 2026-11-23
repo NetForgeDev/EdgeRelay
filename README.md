@@ -4,8 +4,6 @@
 
 **EdgeRelay** is a single-file **Cloudflare Workers & Pages** reverse proxy and subscription manager for **VLESS**, **VMess**, and **Trojan** WebSocket (`ws`) servers.
 
-> **Note:** Built and refined with the assistance of AI tools.
-
 ---
 
 ## How It Works
@@ -133,3 +131,7 @@ This project is intended for educational, research, and personal privacy/network
 ## License
 
 Released under the [MIT License](./LICENSE).
+
+---
+
+<sub>Built and refined with the assistance of AI tools.</sub>
