@@ -1,3 +1,6 @@
+const APP_VERSION = 'v1.1.0';
+const GITHUB_REPO_URL = 'https://github.com/NetForgeDev/EdgeRelay';
+
 const DEFAULT_CS_VALUE = 'TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256:TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384:TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384:TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256:TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256:TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256:TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256:TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA:TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA:TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256:TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256';
 const DEFAULT_FM_V1 = '{"tcp": [{"type": "fragment", "settings": {"packets": "tlshello", "lengths": ["5", "94", "1"], "delays": ["0"], "maxSplit": "0"}},{"type": "fragment", "settings": {"packets": "1-1", "lengths": ["109", "1"], "delays": ["1"], "maxSplit": "355"}}]}';
 const DEFAULT_FM_V2 = '{"tcp": [{"type": "fragment", "settings": {"packets": "tlshello", "lengths": ["0", "104", "1"], "delays": ["0"], "maxSplit": "0"}},{"type": "fragment", "settings": {"packets": "1-1", "lengths": ["114", "1"], "delays": ["1"], "maxSplit": "11"}}]}';
@@ -1260,6 +1263,8 @@ async function handleWebSocketProxy(request) {
 
 function getAdminPanelHtml(adminPath) {
     const safeAdminPath = JSON.stringify(adminPath);
+    const safeVersion = JSON.stringify(APP_VERSION);
+    const safeGithubUrl = JSON.stringify(GITHUB_REPO_URL);
     const tlsPortsJson = JSON.stringify(ALL_TLS_PORTS);
     const noTlsPortsJson = JSON.stringify(ALL_NOTLS_PORTS);
 
@@ -1268,7 +1273,7 @@ function getAdminPanelHtml(adminPath) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EdgeRelay — Cloudflare Proxy &amp; Subscription Panel</title>
+<title>EdgeRelay ${APP_VERSION} — Cloudflare Proxy &amp; Subscription Panel</title>
 <style>
 :root {
     --bg: #f3f5f9;
@@ -1357,7 +1362,12 @@ body {
     background: linear-gradient(135deg, #4f46e5, #06b6d4);
     color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
+.brand-title-row { display: flex; align-items: center; gap: 7px; }
 .brand-title { font-weight: 700; font-size: 16px; line-height: 1.2; }
+.version-pill {
+    font-size: 10.5px; font-weight: 700; padding: 1px 7px; border-radius: 999px;
+    background: var(--primary-soft); color: var(--primary);
+}
 .brand-sub { font-size: 11px; color: var(--text-muted); }
 .header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
@@ -1380,35 +1390,53 @@ body {
 .section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
 .section-head h2 { margin: 0; font-size: 19px; font-weight: 700; }
 .section-desc { margin: 2px 0 0; font-size: 13px; color: var(--text-muted); }
+.section-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.sub-search { width: 220px !important; height: 36px; }
 
 .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.grid-start { align-items: start; }
 @media (max-width: 760px) { .grid-2 { grid-template-columns: minmax(0, 1fr); } }
 
 .card, .sub-card, .preset-item, .list-stack, .field, .modal-section { min-width: 0; max-width: 100%; }
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
-.card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+.card-flex { display: flex; flex-direction: column; }
+.field-grow { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
 .card-title { font-size: 15.5px; font-weight: 700; margin: 0; }
 .card-subtitle { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; overflow-wrap: anywhere; }
 
-label.field-label { display: block; font-size: 12.5px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
-input[type="text"], input[type="password"], select, textarea {
+label.field-label { display: block; font-size: 12.5px; font-weight: 600; color: var(--text-muted); margin-bottom: 5px; }
+input[type="text"], input[type="search"], input[type="password"], select, textarea {
     width: 100%; max-width: 100%; min-width: 0;
-    padding: 9px 12px; font-size: 13.5px; color: var(--text);
+    padding: 8px 11px; font-size: 13.5px; color: var(--text);
     background: var(--surface-alt); border: 1px solid var(--border); border-radius: var(--radius-sm);
     outline: none; transition: border-color 0.15s, box-shadow 0.15s; font-family: inherit;
 }
 textarea { resize: vertical; min-height: 92px; }
 textarea.pool-box {
-    height: 104px;
-    min-height: 104px;
-    max-height: 104px;
+    height: 108px;
+    min-height: 108px;
+    max-height: 108px;
     overflow-y: auto;
     resize: none;
     transition: max-height 0.2s ease;
 }
+.card-flex .field-grow textarea.pool-box:not(.expanded) {
+    flex: 1;
+    height: auto;
+    min-height: 185px;
+    max-height: 100%;
+}
 textarea.pool-box.expanded {
-    max-height: none;
-    overflow-y: hidden;
+    flex: none !important;
+    max-height: none !important;
+    overflow-y: hidden !important;
+}
+@media (max-width: 760px) {
+    .card-flex .field-grow textarea.pool-box:not(.expanded) {
+        min-height: 130px;
+        max-height: 165px;
+    }
 }
 input:focus, select:focus, textarea:focus { border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--primary-soft); }
 .field { margin-bottom: 14px; }
@@ -1419,7 +1447,8 @@ input:focus, select:focus, textarea:focus { border-color: var(--border-focus); b
     display: inline-flex; align-items: center; justify-content: center; gap: 6px;
     height: 36px; padding: 0 14px; font-size: 13px; font-weight: 600;
     border-radius: var(--radius-sm); border: 1px solid var(--border);
-    background: var(--surface); color: var(--text); cursor: pointer; transition: all 0.15s; white-space: nowrap;
+    background: var(--surface); color: var(--text); cursor: pointer; transition: all 0.15s;
+    white-space: nowrap; text-decoration: none;
 }
 .btn:hover { background: var(--surface-alt); }
 .btn:active { transform: translateY(1px); }
@@ -1430,6 +1459,15 @@ input:focus, select:focus, textarea:focus { border-color: var(--border-focus); b
 .btn-sm { height: 30px; padding: 0 10px; font-size: 12px; border-radius: 7px; }
 .btn-icon { width: 32px; height: 32px; padding: 0; }
 .btn-block { width: 100%; height: 42px; font-size: 14px; }
+
+.filter-bar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.filter-pill {
+    border: 1px solid var(--border); background: var(--surface-alt); color: var(--text-muted);
+    font-size: 11.5px; font-weight: 600; padding: 4px 10px; border-radius: 999px;
+    cursor: pointer; transition: all 0.15s;
+}
+.filter-pill:hover { color: var(--text); border-color: var(--border-focus); }
+.filter-pill.active { background: var(--primary); border-color: var(--primary); color: #fff; }
 
 .badge {
     display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px;
@@ -1486,24 +1524,25 @@ input:focus, select:focus, textarea:focus { border-color: var(--border-focus); b
 .item-meta { font-size: 11px; color: var(--text-muted); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .item-row input { background: var(--surface); }
 .item-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.list-expand-footer { text-align: center; padding-top: 4px; }
 
-.check-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+.check-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(138px, 1fr)); gap: 7px; }
 .check-pill {
-    display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--border);
-    border-radius: 9px; background: var(--surface-alt); font-size: 12.5px; font-weight: 500; cursor: pointer;
+    display: flex; align-items: center; gap: 7px; padding: 7px 9px; border: 1px solid var(--border);
+    border-radius: 8px; background: var(--surface-alt); font-size: 12.5px; font-weight: 500; cursor: pointer;
 }
 .check-pill input { width: auto; margin: 0; accent-color: var(--primary); }
 
 .method-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 @media (max-width: 560px) { .method-grid { grid-template-columns: minmax(0, 1fr); } }
 .method-card {
-    border: 1px solid var(--border); background: var(--surface-alt); border-radius: 10px;
-    padding: 10px 12px; cursor: pointer; display: flex; align-items: flex-start; gap: 9px; transition: all 0.15s; min-width: 0;
+    border: 1px solid var(--border); background: var(--surface-alt); border-radius: 9px;
+    padding: 8px 11px; cursor: pointer; display: flex; align-items: flex-start; gap: 8px; transition: all 0.15s; min-width: 0;
 }
 .method-card.selected { border-color: var(--primary); background: var(--primary-soft); }
 .method-card input { width: auto; margin-top: 3px; accent-color: var(--primary); }
-.method-title { font-size: 13px; font-weight: 700; }
-.method-desc { font-size: 11px; color: var(--text-muted); }
+.method-title { font-size: 12.5px; font-weight: 700; }
+.method-desc { font-size: 11px; color: var(--text-muted); line-height: 1.35; }
 
 .modal-backdrop {
     position: fixed; inset: 0; z-index: 100; background: rgba(2, 6, 23, 0.65);
@@ -1514,15 +1553,22 @@ input:focus, select:focus, textarea:focus { border-color: var(--border-focus); b
     border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow-lg);
     display: flex; flex-direction: column; overflow: hidden;
 }
-.modal-dialog.wide { max-width: 920px; }
+.modal-dialog.wide { max-width: 900px; }
 .modal-dialog.narrow { max-width: 520px; }
-.modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.modal-header h3 { margin: 0; font-size: 16.5px; font-weight: 700; }
-.modal-body { padding: 20px; overflow-y: auto; flex: 1; }
-.modal-footer { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: flex-end; gap: 10px; background: var(--surface-alt); flex-wrap: wrap; }
-.modal-section { border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 14px; }
+.modal-header { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.modal-header h3 { margin: 0; font-size: 16px; font-weight: 700; }
+.modal-body { padding: 18px; overflow-y: auto; flex: 1; }
+.modal-footer { padding: 12px 18px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: flex-end; gap: 10px; background: var(--surface-alt); flex-wrap: wrap; }
+.modal-section { border: 1px solid var(--border); border-radius: 11px; padding: 12px 14px; margin-bottom: 10px; }
 .modal-section:last-child { margin-bottom: 0; }
-.modal-section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); margin: 0 0 12px; }
+.modal-section-title { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); margin: 0 0 9px; }
+
+#sub-modal .modal-body { padding: 14px 18px; }
+#sub-modal .grid-2 { gap: 10px 14px; }
+#sub-modal .field { margin-bottom: 8px; }
+#sub-modal .field:last-child { margin-bottom: 0; }
+#sub-modal label.field-label { margin-bottom: 4px; font-size: 12px; }
+#sub-modal .hint { margin-top: 3px; font-size: 11px; }
 
 .preset-item { border: 1px solid var(--border); background: var(--surface-alt); border-radius: 11px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
 .preset-code { font-size: 11.5px; color: var(--text-muted); background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: 8px 10px; max-height: 76px; overflow: hidden; overflow-wrap: anywhere; word-break: break-all; }
@@ -1547,9 +1593,11 @@ html.dark .toast-info { background: #1e3a8a; color: #bfdbfe; border-color: #1d4e
     .tabs-bar { padding: 0 12px; }
     .main-container { padding: 16px 12px 72px; }
     .card, .sub-card { padding: 14px; }
+    .section-tools { width: 100%; }
+    .sub-search { flex: 1; width: auto !important; }
     .modal-backdrop { padding: 10px; }
-    .modal-body { padding: 14px; }
-    .modal-section { padding: 12px; }
+    .modal-body, #sub-modal .modal-body { padding: 12px; }
+    .modal-section { padding: 11px; }
     .toast-container { left: 12px; right: 12px; max-width: none; }
     .item-row { flex-wrap: wrap; gap: 6px; padding: 10px; }
     .item-row .item-num { min-width: 18px; text-align: left; }
@@ -1567,7 +1615,7 @@ html.dark .toast-info { background: #1e3a8a; color: #bfdbfe; border-color: #1d4e
         <div class="auth-logo">
             <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
         </div>
-        <h1>EdgeRelay Panel</h1>
+        <h1>EdgeRelay <span class="version-pill mono">${APP_VERSION}</span></h1>
         <p>Cloudflare Edge Proxy &amp; Multi-Core Subscription Manager</p>
         <div class="field">
             <label class="field-label" for="login-password">Admin Password</label>
@@ -1586,12 +1634,18 @@ html.dark .toast-info { background: #1e3a8a; color: #bfdbfe; border-color: #1d4e
                     <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                 </div>
                 <div>
-                    <div class="brand-title">EdgeRelay</div>
+                    <div class="brand-title-row">
+                        <span class="brand-title">EdgeRelay</span>
+                        <span class="version-pill mono">${APP_VERSION}</span>
+                    </div>
                     <div class="brand-sub">Cloudflare Edge Proxy &amp; Subscription Engine</div>
                 </div>
             </div>
             <div class="header-actions">
                 <span id="unsaved-pill" class="badge badge-warning hidden">Unsaved Changes</span>
+                <a id="github-link-btn" class="btn btn-sm btn-icon" target="_blank" rel="noopener noreferrer" title="GitHub Repository (EdgeRelay)" aria-label="GitHub Repository">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+                </a>
                 <button id="theme-btn" class="btn btn-sm" type="button">Dark</button>
                 <button id="save-all-btn" class="btn btn-primary btn-sm" type="button">Save Changes</button>
                 <button id="logout-btn" class="btn btn-danger btn-sm" type="button">Logout</button>
@@ -1614,7 +1668,10 @@ html.dark .toast-info { background: #1e3a8a; color: #bfdbfe; border-color: #1d4e
                     <h2>Output Subscription Links</h2>
                     <p class="section-desc">Create unlimited subscription endpoints with independent core, format, ECH/DNS, generation modes, and F&amp;F settings.</p>
                 </div>
-                <button id="btn-new-sub" class="btn btn-primary" type="button">+ Create Subscription</button>
+                <div class="section-tools">
+                    <input type="search" id="sub-search-input" class="sub-search" placeholder="Search subscriptions...">
+                    <button id="btn-new-sub" class="btn btn-primary" type="button">+ Create Subscription</button>
+                </div>
             </div>
             <div id="subs-grid" class="grid-2"></div>
         </section>
@@ -1627,14 +1684,15 @@ html.dark .toast-info { background: #1e3a8a; color: #bfdbfe; border-color: #1d4e
                     <p class="section-desc">Manage WebSocket custom servers and upstream external subscription links.</p>
                 </div>
             </div>
-            <div class="grid-2">
+            <div class="grid-2 grid-start">
                 <div class="card">
                     <div class="card-header">
                         <div>
                             <h3 class="card-title">Custom Servers (WS)</h3>
                             <div class="card-subtitle">Supports VMess, VLESS, and Trojan WebSocket links</div>
                         </div>
-                        <div style="display:flex; gap:6px;">
+                        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                            <button id="btn-expand-custom" class="btn btn-sm hidden" type="button" onclick="toggleSourceExpand('custom')">Show All</button>
                             <button class="btn btn-sm" type="button" onclick="openBulkModal('custom')">Bulk</button>
                             <button class="btn btn-primary btn-sm" type="button" onclick="addSourceItem('custom')">+ Add</button>
                         </div>
@@ -1648,7 +1706,8 @@ html.dark .toast-info { background: #1e3a8a; color: #bfdbfe; border-color: #1d4e
                             <h3 class="card-title">External Subscription Links</h3>
                             <div class="card-subtitle">Plain URIs, Base64 subscriptions, or Sing-box JSON URLs</div>
                         </div>
-                        <div style="display:flex; gap:6px;">
+                        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                            <button id="btn-expand-sublink" class="btn btn-sm hidden" type="button" onclick="toggleSourceExpand('sublink')">Show All</button>
                             <button class="btn btn-sm" type="button" onclick="openBulkModal('sublink')">Bulk</button>
                             <button class="btn btn-primary btn-sm" type="button" onclick="addSourceItem('sublink')">+ Add</button>
                         </div>
@@ -1667,20 +1726,27 @@ html.dark .toast-info { background: #1e3a8a; color: #bfdbfe; border-color: #1d4e
                 </div>
             </div>
             <div class="grid-2" style="margin-bottom: 18px;">
-                <div class="card">
+                <div class="card card-flex">
                     <div class="card-header">
                         <div>
                             <h3 class="card-title">IP / CIDR / Domain Pool</h3>
                             <div class="card-subtitle" id="ip-stats">0 IPv4, 0 IPv6, 0 Domains</div>
                         </div>
-                        <div style="display:flex; gap:6px;">
+                        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                            <button class="btn btn-sm" type="button" onclick="togglePoolFormat('cfg-ipList', this)" title="Toggle comma vs one-per-line">Sep: ,</button>
                             <button class="btn btn-sm" type="button" onclick="togglePoolExpand('cfg-ipList', this)">Expand</button>
                             <button class="btn btn-primary btn-sm" type="button" onclick="openPoolAddModal('cfg-ipList', 'Add IPs / CIDRs / Domains')">+ Add</button>
                         </div>
                     </div>
-                    <div class="field">
+                    <div class="filter-bar" id="ip-filter-bar">
+                        <button type="button" class="filter-pill active" data-filter="all" onclick="setIpFilter('all')">All</button>
+                        <button type="button" class="filter-pill" data-filter="ipv4" onclick="setIpFilter('ipv4')">IPv4</button>
+                        <button type="button" class="filter-pill" data-filter="ipv6" onclick="setIpFilter('ipv6')">IPv6</button>
+                        <button type="button" class="filter-pill" data-filter="domain" onclick="setIpFilter('domain')">Domains</button>
+                    </div>
+                    <div class="field field-grow">
                         <textarea id="cfg-ipList" class="mono pool-box" placeholder="104.21.32.1, 172.66.210.0/24, 2606:4700::/48, www.speedtest.net"></textarea>
-                        <div class="hint">Supports IPv4, IPv4 CIDR, IPv6, IPv6 CIDR, and clean domains. One per line or comma-separated (normalized to commas on save).</div>
+                        <div class="hint">Supports IPv4, IPv4 CIDR, IPv6, IPv6 CIDR, and clean domains. Filter safely without losing hidden entries.</div>
                     </div>
                 </div>
 
@@ -1694,7 +1760,8 @@ html.dark .toast-info { background: #1e3a8a; color: #bfdbfe; border-color: #1d4e
                     <div class="field">
                         <div class="divider-row" style="margin-bottom:6px;">
                             <label class="field-label" for="cfg-domainsWorker" style="margin:0;">Worker Domains (TLS &amp; No-TLS)</label>
-                            <div style="display:flex; gap:6px;">
+                            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                                <button class="btn btn-sm" type="button" onclick="togglePoolFormat('cfg-domainsWorker', this)" title="Toggle comma vs one-per-line">Sep: ,</button>
                                 <button class="btn btn-sm" type="button" onclick="togglePoolExpand('cfg-domainsWorker', this)">Expand</button>
                                 <button class="btn btn-primary btn-sm" type="button" onclick="openPoolAddModal('cfg-domainsWorker', 'Add Worker Domains')">+ Add</button>
                             </div>
@@ -1704,7 +1771,8 @@ html.dark .toast-info { background: #1e3a8a; color: #bfdbfe; border-color: #1d4e
                     <div class="field">
                         <div class="divider-row" style="margin-bottom:6px;">
                             <label class="field-label" for="cfg-domainsPages" style="margin:0;">Pages Domains (TLS Only)</label>
-                            <div style="display:flex; gap:6px;">
+                            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                                <button class="btn btn-sm" type="button" onclick="togglePoolFormat('cfg-domainsPages', this)" title="Toggle comma vs one-per-line">Sep: ,</button>
                                 <button class="btn btn-sm" type="button" onclick="togglePoolExpand('cfg-domainsPages', this)">Expand</button>
                                 <button class="btn btn-primary btn-sm" type="button" onclick="openPoolAddModal('cfg-domainsPages', 'Add Pages Domains')">+ Add</button>
                             </div>
@@ -1749,14 +1817,17 @@ html.dark .toast-info { background: #1e3a8a; color: #bfdbfe; border-color: #1d4e
                     <p class="section-desc">Create and store reusable Cipher Suite (cs) and Final Mask (fm) configurations for Xray F&amp;F subscriptions.</p>
                 </div>
             </div>
-            <div class="grid-2">
+            <div class="grid-2 grid-start">
                 <div class="card">
                     <div class="card-header">
                         <div>
                             <h3 class="card-title">Cipher Suites (cs)</h3>
                             <div class="card-subtitle">Colon-separated TLS cipher suites</div>
                         </div>
-                        <button class="btn btn-primary btn-sm" type="button" onclick="openPresetModal('cs')">+ New CS</button>
+                        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                            <button id="btn-expand-cs" class="btn btn-sm hidden" type="button" onclick="togglePresetExpand('cs')">Show All</button>
+                            <button class="btn btn-primary btn-sm" type="button" onclick="openPresetModal('cs')">+ New CS</button>
+                        </div>
                     </div>
                     <div id="cs-presets-list" class="list-stack"></div>
                 </div>
@@ -1767,7 +1838,10 @@ html.dark .toast-info { background: #1e3a8a; color: #bfdbfe; border-color: #1d4e
                             <h3 class="card-title">Final Masks (fm)</h3>
                             <div class="card-subtitle">JSON configuration for fragment / mask rules</div>
                         </div>
-                        <button class="btn btn-primary btn-sm" type="button" onclick="openPresetModal('fm')">+ New FM</button>
+                        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                            <button id="btn-expand-fm" class="btn btn-sm hidden" type="button" onclick="togglePresetExpand('fm')">Show All</button>
+                            <button class="btn btn-primary btn-sm" type="button" onclick="openPresetModal('fm')">+ New FM</button>
+                        </div>
                     </div>
                     <div id="fm-presets-list" class="list-stack"></div>
                 </div>
@@ -1847,19 +1921,19 @@ html.dark .toast-info { background: #1e3a8a; color: #bfdbfe; border-color: #1d4e
                         </select>
                     </div>
                 </div>
-                <div style="margin-top: 8px;">
+                <div style="margin-top: 6px;">
                     <label class="switch"><input type="checkbox" id="sm-enabled"> <span>Subscription Enabled</span></label>
                 </div>
             </div>
 
             <div class="modal-section">
                 <div class="modal-section-title">2. Input Sources &amp; Generation Modes</div>
-                <div style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:14px;">
+                <div style="display:flex; gap:18px; flex-wrap:wrap; margin-bottom:10px;">
                     <label class="switch"><input type="checkbox" id="sm-includeCustom"> <span>Include Custom Servers</span></label>
                     <label class="switch"><input type="checkbox" id="sm-includeSubLinks"> <span>Include External Sub Links</span></label>
                 </div>
                 <label class="field-label">Generation Modes</label>
-                <div class="check-grid" id="sm-genModes" style="margin-bottom: 14px;">
+                <div class="check-grid" id="sm-genModes" style="margin-bottom: 10px;">
                     <label class="check-pill"><input type="checkbox" value="ip_tls"> IPv4 TLS</label>
                     <label class="check-pill"><input type="checkbox" value="ip_notls"> IPv4 No-TLS</label>
                     <label class="check-pill"><input type="checkbox" value="ipv6_tls"> IPv6 TLS</label>
@@ -1869,7 +1943,7 @@ html.dark .toast-info { background: #1e3a8a; color: #bfdbfe; border-color: #1d4e
                 </div>
                 <div class="field">
                     <label class="field-label">Profile Extra Servers (optional, one per line: IP:Port or [IPv6]:Port)</label>
-                    <textarea id="sm-extraServers" class="mono" rows="2" placeholder="127.0.0.1:40443"></textarea>
+                    <textarea id="sm-extraServers" class="mono" style="min-height: 64px;" rows="2" placeholder="127.0.0.1:40443"></textarea>
                 </div>
             </div>
 
@@ -1882,12 +1956,12 @@ html.dark .toast-info { background: #1e3a8a; color: #bfdbfe; border-color: #1d4e
                     <label class="method-card"><input type="radio" name="sm-fragmentMode" value="fnf"><div><div class="method-title">F&amp;F (Patterniha)</div><div class="method-desc">Xray-only Cipher Suite (cs) &amp; Final Mask (fm)</div></div></label>
                 </div>
 
-                <div id="sm-frag-delay-wrap" class="field hidden" style="margin-top: 12px;">
+                <div id="sm-frag-delay-wrap" class="field hidden" style="margin-top: 10px;">
                     <label class="field-label">Fragment Fallback Delay</label>
                     <input type="text" id="sm-fragmentFallbackDelay" class="mono" placeholder="450ms">
                 </div>
 
-                <div id="sm-fnf-wrap" class="grid-2 hidden" style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border);">
+                <div id="sm-fnf-wrap" class="grid-2 hidden" style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border);">
                     <div class="field">
                         <label class="field-label">Cipher Suite Preset (cs)</label>
                         <select id="sm-fnfCsId"></select>
@@ -1930,7 +2004,7 @@ html.dark .toast-info { background: #1e3a8a; color: #bfdbfe; border-color: #1d4e
                     <div class="field">
                         <label class="field-label">ECH DNS Server (udp://, tcp://, tls://, https://, h3://, quic://, local)</label>
                         <input type="text" id="sm-echDns" class="mono" placeholder="udp://1.1.1.1 or https://1.1.1.1/dns-query">
-                        <div class="hint">In Xray mode, emitted as <span class="mono">ech=domain+dns</span>. In Sing-box, configures <span class="mono">dns.servers</span> &amp; <span class="mono">tls.ech</span>.</div>
+                        <div class="hint">Xray: <span class="mono">ech=domain+dns</span> · Sing-box: <span class="mono">dns.servers</span> + <span class="mono">tls.ech</span></div>
                     </div>
                 </div>
             </div>
@@ -1954,7 +2028,7 @@ html.dark .toast-info { background: #1e3a8a; color: #bfdbfe; border-color: #1d4e
                             <option value="random">random</option>
                             <option value="custom">Custom value...</option>
                         </select>
-                        <input type="text" id="sm-fpCustom" class="mono hidden" style="margin-top:6px;" placeholder="Enter custom fp">
+                        <input type="text" id="sm-fpCustom" class="mono hidden" style="margin-top:5px;" placeholder="Enter custom fp">
                     </div>
                     <div class="field">
                         <label class="field-label">ALPN</label>
@@ -1966,7 +2040,7 @@ html.dark .toast-info { background: #1e3a8a; color: #bfdbfe; border-color: #1d4e
                             <option value="none">Omit ALPN</option>
                             <option value="custom">Custom value...</option>
                         </select>
-                        <input type="text" id="sm-alpnCustom" class="mono hidden" style="margin-top:6px;" placeholder="Enter custom alpn">
+                        <input type="text" id="sm-alpnCustom" class="mono hidden" style="margin-top:5px;" placeholder="Enter custom alpn">
                     </div>
                     <div class="field">
                         <label class="field-label">Packet Encoding</label>
@@ -1982,13 +2056,13 @@ html.dark .toast-info { background: #1e3a8a; color: #bfdbfe; border-color: #1d4e
                     </div>
                 </div>
 
-                <div style="display:flex; gap:18px; flex-wrap:wrap; margin: 12px 0;">
+                <div style="display:flex; gap:16px; flex-wrap:wrap; margin: 10px 0 6px;">
                     <label class="switch"><input type="checkbox" id="sm-allowInsecure"> <span>Allow Insecure</span></label>
                     <label class="switch"><input type="checkbox" id="sm-randomizeSniPrefix"> <span>Randomize SNI Subdomain</span></label>
                     <label class="switch"><input type="checkbox" id="sm-randomizeHeaders"> <span>Randomize DPI Headers</span></label>
                 </div>
 
-                <div id="sm-custom-header-wrap" class="grid-2 hidden">
+                <div id="sm-custom-header-wrap" class="grid-2 hidden" style="margin-top: 8px;">
                     <div class="field">
                         <label class="field-label">Custom Header Key</label>
                         <input type="text" id="sm-headerKey" class="mono" placeholder="X-Real-IP">
@@ -2144,8 +2218,14 @@ html.dark .toast-info { background: #1e3a8a; color: #bfdbfe; border-color: #1d4e
 
 <script>
 const ADMIN_PATH = ${safeAdminPath};
+const APP_VERSION = ${safeVersion};
+const GITHUB_REPO_URL = ${safeGithubUrl};
 const ALL_TLS_PORTS = ${tlsPortsJson};
 const ALL_NOTLS_PORTS = ${noTlsPortsJson};
+const SOURCE_PREVIEW_LIMIT = 6;
+const PRESET_PREVIEW_LIMIT = 4;
+
+document.getElementById('github-link-btn').href = GITHUB_REPO_URL;
 
 const Base64 = {
     encode: (s) => btoa(encodeURIComponent(s).replace(/%([0-9A-F]{2})/g, (_, p) => String.fromCharCode('0x' + p))),
@@ -2160,6 +2240,14 @@ const cleanStr = (v) => (v === null || v === undefined) ? '' : (['null', 'undefi
 const formatHostForUri = (a) => !a ? '' : (a.includes(':') ? '[' + a.replace(/[\\[\\]]/g, '') + ']' : a);
 const splitPoolEntries = (val) => (val || '').split(/[,\\r\\n]+/).map(x => x.trim()).filter(Boolean);
 
+function classifyPoolItem(item) {
+    const s = (item || '').trim();
+    if (/^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}(?:\\/[0-9]{1,2})?$/.test(s)) return 'ipv4';
+    const clean = s.replace(/[\\[\\]]/g, '').split('/')[0];
+    if (clean.includes(':') && /^[0-9a-fA-F:]+$/.test(clean)) return 'ipv6';
+    return 'domain';
+}
+
 let state = null;
 let dirty = false;
 let editingSubIdx = -1;
@@ -2168,6 +2256,10 @@ let bulkMode = '';
 let presetMode = '';
 let editingPresetIdx = -1;
 let poolAddTargetId = '';
+let sourceExpanded = { custom: false, sublink: false };
+let presetExpanded = { cs: false, fm: false };
+let poolDisplayMode = { 'cfg-ipList': 'comma', 'cfg-domainsWorker': 'comma', 'cfg-domainsPages': 'comma' };
+let ipFilter = 'all';
 
 function markDirty(flag = true) {
     dirty = flag;
@@ -2218,9 +2310,9 @@ function refreshExpandedHeight(id) {
     if (!tx) return;
     if (tx.classList.contains('expanded')) {
         tx.style.height = 'auto';
-        tx.style.height = Math.max(104, tx.scrollHeight + 4) + 'px';
+        tx.style.height = Math.max(108, tx.scrollHeight + 4) + 'px';
     } else {
-        tx.style.height = '104px';
+        tx.style.height = '';
     }
 }
 
@@ -2230,6 +2322,73 @@ window.togglePoolExpand = (id, btn) => {
     btn.textContent = expanded ? 'Collapse' : 'Expand';
     refreshExpandedHeight(id);
 };
+
+window.togglePoolFormat = (id, btn) => {
+    if (id === 'cfg-ipList') commitIpPoolTextareaToState();
+    const nextMode = poolDisplayMode[id] === 'comma' ? 'lines' : 'comma';
+    poolDisplayMode[id] = nextMode;
+    btn.textContent = nextMode === 'comma' ? 'Sep: ,' : 'Sep: ↵';
+
+    if (id === 'cfg-ipList') {
+        renderIpPoolTextarea();
+    } else {
+        const tx = document.getElementById(id);
+        const items = splitPoolEntries(tx.value);
+        tx.value = items.join(nextMode === 'lines' ? '\\n' : ', ');
+        refreshExpandedHeight(id);
+    }
+};
+
+function renderIpPoolTextarea() {
+    const allItems = state?.ipList || [];
+    const visible = ipFilter === 'all' ? allItems : allItems.filter(x => classifyPoolItem(x) === ipFilter);
+    const sep = poolDisplayMode['cfg-ipList'] === 'lines' ? '\\n' : ', ';
+    document.getElementById('cfg-ipList').value = visible.join(sep);
+    refreshExpandedHeight('cfg-ipList');
+    updateIpStats();
+}
+
+function commitIpPoolTextareaToState() {
+    if (!state) return;
+    const parsed = splitPoolEntries(document.getElementById('cfg-ipList').value);
+    if (ipFilter === 'all') {
+        state.ipList = parsed;
+    } else {
+        const kept = (state.ipList || []).filter(x => classifyPoolItem(x) !== ipFilter);
+        state.ipList = kept.concat(parsed);
+    }
+    updateIpStats();
+}
+
+window.setIpFilter = (filter) => {
+    commitIpPoolTextareaToState();
+    ipFilter = filter;
+    document.querySelectorAll('#ip-filter-bar .filter-pill').forEach(p => {
+        p.classList.toggle('active', p.dataset.filter === filter);
+    });
+    renderIpPoolTextarea();
+};
+
+function updateIpStats() {
+    const items = state?.ipList || splitPoolEntries(document.getElementById('cfg-ipList').value);
+    let v4 = 0, v6 = 0, dom = 0;
+    items.forEach(i => {
+        const t = classifyPoolItem(i);
+        if (t === 'ipv4') v4++;
+        else if (t === 'ipv6') v6++;
+        else dom++;
+    });
+    const shownCount = ipFilter === 'all' ? items.length : (ipFilter === 'ipv4' ? v4 : (ipFilter === 'ipv6' ? v6 : dom));
+    const suffix = ipFilter !== 'all' ? ' (showing ' + shownCount + ')' : '';
+    document.getElementById('ip-stats').textContent = v4 + ' IPv4, ' + v6 + ' IPv6, ' + dom + ' Domains' + suffix;
+
+    const counts = { all: items.length, ipv4: v4, ipv6: v6, domain: dom };
+    const labels = { all: 'All', ipv4: 'IPv4', ipv6: 'IPv6', domain: 'Domains' };
+    document.querySelectorAll('#ip-filter-bar .filter-pill').forEach(p => {
+        const f = p.dataset.filter;
+        p.textContent = labels[f] + ' (' + counts[f] + ')';
+    });
+}
 
 window.openPoolAddModal = (targetId, title) => {
     poolAddTargetId = targetId;
@@ -2245,6 +2404,34 @@ window.confirmPoolAdd = () => {
     const newEntries = splitPoolEntries(area.value);
     if (!newEntries.length) return toast('Enter at least one entry', 'error');
 
+    if (poolAddTargetId === 'cfg-ipList') {
+        commitIpPoolTextareaToState();
+        const existing = state.ipList || [];
+        const seen = new Set(existing.map(x => x.toLowerCase()));
+        let added = 0;
+        let mismatchFilter = false;
+        newEntries.forEach(item => {
+            if (!seen.has(item.toLowerCase())) {
+                existing.push(item);
+                seen.add(item.toLowerCase());
+                added++;
+                if (ipFilter !== 'all' && classifyPoolItem(item) !== ipFilter) mismatchFilter = true;
+            }
+        });
+        state.ipList = existing;
+        if (mismatchFilter) {
+            ipFilter = 'all';
+            document.querySelectorAll('#ip-filter-bar .filter-pill').forEach(p => {
+                p.classList.toggle('active', p.dataset.filter === 'all');
+            });
+        }
+        renderIpPoolTextarea();
+        markDirty(true);
+        closeModal('pool-add-modal');
+        toast('Added ' + added + ' new entry(s)');
+        return;
+    }
+
     const target = document.getElementById(poolAddTargetId);
     const existing = splitPoolEntries(target.value);
     const seen = new Set(existing.map(x => x.toLowerCase()));
@@ -2257,8 +2444,8 @@ window.confirmPoolAdd = () => {
         }
     });
 
-    target.value = existing.join(', ');
-    if (poolAddTargetId === 'cfg-ipList') updateIpStats();
+    const sep = poolDisplayMode[poolAddTargetId] === 'lines' ? '\\n' : ', ';
+    target.value = existing.join(sep);
     refreshExpandedHeight(poolAddTargetId);
     markDirty(true);
     closeModal('pool-add-modal');
@@ -2330,16 +2517,7 @@ function updateCounts() {
     document.getElementById('cnt-fnf').textContent = (state.csPresets || []).length + (state.fmPresets || []).length;
 }
 
-function updateIpStats() {
-    const items = splitPoolEntries(document.getElementById('cfg-ipList').value);
-    let v4 = 0, v6 = 0, dom = 0;
-    items.forEach(i => {
-        if (/^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}(?:\\/[0-9]{1,2})?$/.test(i)) v4++;
-        else if (i.includes(':') && /^[0-9a-fA-F:\\[\\]\\/]+$/.test(i)) v6++;
-        else dom++;
-    });
-    document.getElementById('ip-stats').textContent = v4 + ' IPv4, ' + v6 + ' IPv6, ' + dom + ' Domains';
-}
+document.getElementById('sub-search-input').addEventListener('input', () => renderSubscriptions());
 
 function renderSubscriptions() {
     const grid = document.getElementById('subs-grid');
@@ -2349,11 +2527,23 @@ function renderSubscriptions() {
         return;
     }
 
+    const query = (document.getElementById('sub-search-input')?.value || '').trim().toLowerCase();
+    const matched = subs.map((sub, idx) => ({ sub, idx })).filter(({ sub }) => {
+        if (!query) return true;
+        const hay = [sub.name, sub.path, sub.coreType, sub.outputFormat, sub.fragmentMode].join(' ').toLowerCase();
+        return hay.includes(query);
+    });
+
+    if (!matched.length) {
+        grid.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;">No subscriptions match your search. <button type="button" class="btn btn-sm btn-soft" style="margin-left:8px;" onclick="clearSubSearch()">Clear</button></div>';
+        return;
+    }
+
     const modeLabels = { ip_tls: 'IPv4 TLS', ip_notls: 'IPv4 No-TLS', ipv6_tls: 'IPv6 TLS', ipv6_notls: 'IPv6 No-TLS', domain_tls: 'Dom TLS', domain_notls: 'Dom No-TLS' };
     const fragLabels = { none: 'No Fragment', tls_fragment: 'TLS Fragment', tls_record_fragment: 'Record Fragment', fnf: 'F&F Patterniha' };
 
     grid.innerHTML = '';
-    subs.forEach((sub, idx) => {
+    matched.forEach(({ sub, idx }) => {
         const card = document.createElement('div');
         card.className = 'sub-card' + (sub.enabled ? '' : ' disabled');
         const fullUrl = 'https://' + location.host + sub.path;
@@ -2408,6 +2598,11 @@ function renderSubscriptions() {
     });
 }
 
+window.clearSubSearch = () => {
+    document.getElementById('sub-search-input').value = '';
+    renderSubscriptions();
+};
+
 window.toggleSubEnabled = (idx, val) => {
     state.subscriptions[idx].enabled = val;
     markDirty(true);
@@ -2433,6 +2628,11 @@ window.deleteSub = (idx) => {
     renderSubscriptions();
 };
 
+window.toggleSourceExpand = (kind) => {
+    sourceExpanded[kind] = !sourceExpanded[kind];
+    renderSources();
+};
+
 function renderSources() {
     renderSourceList('custom-servers-list', state.customServers || [], 'custom');
     renderSourceList('sub-links-list', state.defaultSublink || [], 'sublink');
@@ -2440,12 +2640,25 @@ function renderSources() {
 
 function renderSourceList(containerId, items, kind) {
     const el = document.getElementById(containerId);
+    const expBtn = document.getElementById(kind === 'custom' ? 'btn-expand-custom' : 'btn-expand-sublink');
+
+    if (items.length > SOURCE_PREVIEW_LIMIT) {
+        expBtn.classList.remove('hidden');
+        expBtn.textContent = sourceExpanded[kind] ? 'Collapse' : 'Show All (' + items.length + ')';
+    } else {
+        expBtn.classList.add('hidden');
+    }
+
     if (!items.length) {
         el.innerHTML = '<div class="empty-state">No entries yet. Click <strong>+ Add</strong> or <strong>Bulk</strong>.</div>';
         return;
     }
+
+    const isExpanded = sourceExpanded[kind] || items.length <= SOURCE_PREVIEW_LIMIT;
+    const visibleItems = isExpanded ? items : items.slice(0, SOURCE_PREVIEW_LIMIT);
+
     el.innerHTML = '';
-    items.forEach((val, idx) => {
+    visibleItems.forEach((val, idx) => {
         const row = document.createElement('div');
         row.className = 'item-row';
         let meta = '';
@@ -2474,11 +2687,19 @@ function renderSourceList(containerId, items, kind) {
         });
         el.appendChild(row);
     });
+
+    if (!isExpanded && items.length > SOURCE_PREVIEW_LIMIT) {
+        const footer = document.createElement('div');
+        footer.className = 'list-expand-footer';
+        footer.innerHTML = '<button type="button" class="btn btn-sm btn-soft" onclick="toggleSourceExpand(\\'' + kind + '\\')">Show ' + (items.length - SOURCE_PREVIEW_LIMIT) + ' more item(s)...</button>';
+        el.appendChild(footer);
+    }
 }
 
 window.addSourceItem = (kind) => {
-    if (kind === 'custom') state.customServers.push('');
-    else state.defaultSublink.push('');
+    const arr = kind === 'custom' ? state.customServers : state.defaultSublink;
+    arr.push('');
+    if (arr.length > SOURCE_PREVIEW_LIMIT) sourceExpanded[kind] = true;
     markDirty(true);
     updateCounts();
     renderSources();
@@ -2563,6 +2784,11 @@ window.saveServerModal = () => {
     closeModal('server-modal');
 };
 
+window.togglePresetExpand = (kind) => {
+    presetExpanded[kind] = !presetExpanded[kind];
+    renderPresets();
+};
+
 function renderPresets() {
     renderPresetGroup('cs-presets-list', state.csPresets || [], 'cs');
     renderPresetGroup('fm-presets-list', state.fmPresets || [], 'fm');
@@ -2570,12 +2796,25 @@ function renderPresets() {
 
 function renderPresetGroup(containerId, list, kind) {
     const el = document.getElementById(containerId);
+    const expBtn = document.getElementById(kind === 'cs' ? 'btn-expand-cs' : 'btn-expand-fm');
+
+    if (list.length > PRESET_PREVIEW_LIMIT) {
+        expBtn.classList.remove('hidden');
+        expBtn.textContent = presetExpanded[kind] ? 'Collapse' : 'Show All (' + list.length + ')';
+    } else {
+        expBtn.classList.add('hidden');
+    }
+
     if (!list.length) {
         el.innerHTML = '<div class="empty-state">No presets saved. Click <strong>+ New</strong> to create one.</div>';
         return;
     }
+
+    const isExpanded = presetExpanded[kind] || list.length <= PRESET_PREVIEW_LIMIT;
+    const visibleList = isExpanded ? list : list.slice(0, PRESET_PREVIEW_LIMIT);
+
     el.innerHTML = '';
-    list.forEach((p, idx) => {
+    visibleList.forEach((p, idx) => {
         const card = document.createElement('div');
         card.className = 'preset-item';
         let validBadge = '';
@@ -2599,6 +2838,13 @@ function renderPresetGroup(containerId, list, kind) {
         card.querySelector('.preset-code').textContent = p.value;
         el.appendChild(card);
     });
+
+    if (!isExpanded && list.length > PRESET_PREVIEW_LIMIT) {
+        const footer = document.createElement('div');
+        footer.className = 'list-expand-footer';
+        footer.innerHTML = '<button type="button" class="btn btn-sm btn-soft" onclick="togglePresetExpand(\\'' + kind + '\\')">Show ' + (list.length - PRESET_PREVIEW_LIMIT) + ' more preset(s)...</button>';
+        el.appendChild(footer);
+    }
 }
 
 window.openPresetModal = (kind, idx = -1) => {
@@ -2653,6 +2899,7 @@ window.savePresetModal = () => {
     const list = presetMode === 'fm' ? state.fmPresets : state.csPresets;
     if (editingPresetIdx === -1) {
         list.push({ id: presetMode + '_' + Math.random().toString(36).slice(2, 9), name, value });
+        if (list.length > PRESET_PREVIEW_LIMIT) presetExpanded[presetMode] = true;
     } else {
         list[editingPresetIdx].name = name;
         list[editingPresetIdx].value = value;
@@ -2876,7 +3123,7 @@ window.saveSubModal = () => {
 document.getElementById('btn-new-sub').onclick = () => openSubModal(-1);
 
 function syncNetworkAndSettingsToState() {
-    state.ipList = splitPoolEntries(document.getElementById('cfg-ipList').value);
+    commitIpPoolTextareaToState();
     state.domainsWorker = splitPoolEntries(document.getElementById('cfg-domainsWorker').value);
     state.domainsPages = splitPoolEntries(document.getElementById('cfg-domainsPages').value);
     state.alpnList = document.getElementById('cfg-alpnList').value.split(';').map(x => x.trim()).filter(Boolean);
@@ -2886,11 +3133,10 @@ function syncNetworkAndSettingsToState() {
     state.defaultWebsite = document.getElementById('cfg-defaultWebsite').value.trim();
     state.adminPath = document.getElementById('cfg-adminPath').value.trim() || '/panel';
 
-    document.getElementById('cfg-ipList').value = state.ipList.join(', ');
-    document.getElementById('cfg-domainsWorker').value = state.domainsWorker.join(', ');
-    document.getElementById('cfg-domainsPages').value = state.domainsPages.join(', ');
-    ['cfg-ipList', 'cfg-domainsWorker', 'cfg-domainsPages'].forEach(refreshExpandedHeight);
-    updateIpStats();
+    renderIpPoolTextarea();
+    document.getElementById('cfg-domainsWorker').value = state.domainsWorker.join(poolDisplayMode['cfg-domainsWorker'] === 'lines' ? '\\n' : ', ');
+    document.getElementById('cfg-domainsPages').value = state.domainsPages.join(poolDisplayMode['cfg-domainsPages'] === 'lines' ? '\\n' : ', ');
+    ['cfg-domainsWorker', 'cfg-domainsPages'].forEach(refreshExpandedHeight);
 }
 
 async function runPreview(sub) {
@@ -2925,9 +3171,9 @@ window.previewSubscription = (idx) => runPreview(state.subscriptions[idx]);
 window.previewFromEditor = () => runPreview(collectSubFromModal());
 
 function renderNetworkAndSettings() {
-    document.getElementById('cfg-ipList').value = (state.ipList || []).join(', ');
-    document.getElementById('cfg-domainsWorker').value = (state.domainsWorker || []).join(', ');
-    document.getElementById('cfg-domainsPages').value = (state.domainsPages || []).join(', ');
+    renderIpPoolTextarea();
+    document.getElementById('cfg-domainsWorker').value = (state.domainsWorker || []).join(poolDisplayMode['cfg-domainsWorker'] === 'lines' ? '\\n' : ', ');
+    document.getElementById('cfg-domainsPages').value = (state.domainsPages || []).join(poolDisplayMode['cfg-domainsPages'] === 'lines' ? '\\n' : ', ');
     document.getElementById('cfg-alpnList').value = (state.alpnList || []).join('; ');
     document.getElementById('cfg-fpList').value = (state.fpList || []).join(', ');
     document.getElementById('cfg-defaultWebsite').value = state.defaultWebsite || '';
@@ -2952,13 +3198,12 @@ function renderNetworkAndSettings() {
         lbl.querySelector('input').addEventListener('change', () => markDirty(true));
         noTlsBox.appendChild(lbl);
     });
-    updateIpStats();
-    ['cfg-ipList', 'cfg-domainsWorker', 'cfg-domainsPages'].forEach(refreshExpandedHeight);
+    ['cfg-domainsWorker', 'cfg-domainsPages'].forEach(refreshExpandedHeight);
 }
 
 ['cfg-ipList', 'cfg-domainsWorker', 'cfg-domainsPages', 'cfg-alpnList', 'cfg-fpList', 'cfg-defaultWebsite', 'cfg-adminPath', 'cfg-newPassword'].forEach(id => {
     document.getElementById(id).addEventListener('input', () => {
-        if (id === 'cfg-ipList') updateIpStats();
+        if (id === 'cfg-ipList') commitIpPoolTextareaToState();
         if (['cfg-ipList', 'cfg-domainsWorker', 'cfg-domainsPages'].includes(id)) refreshExpandedHeight(id);
         markDirty(true);
     });
