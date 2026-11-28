@@ -1,4 +1,4 @@
-const APP_VERSION = 'v1.1.1';
+const APP_VERSION = 'v1.1.2';
 const GITHUB_REPO_URL = 'https://github.com/NetForgeDev/EdgeRelay';
 const GITHUB_LATEST_RELEASE_API = 'https://api.github.com/repos/NetForgeDev/EdgeRelay/releases/latest';
 const UPDATE_CACHE_KEY = 'gh_update_cache';
@@ -1657,6 +1657,19 @@ input:focus, select:focus, textarea:focus { border-color: var(--border-focus); b
 .badge-danger { background: var(--danger-soft); color: var(--danger); }
 .badge-info { background: var(--info-soft); color: var(--info); }
 .badge-neutral { background: var(--surface-alt); border-color: var(--border); color: var(--text-muted); }
+.unsaved-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 2px 3px 2px 10px; border-radius: 999px;
+    background: var(--warning-soft); color: var(--warning);
+    border: 1px solid rgba(217, 119, 6, 0.28);
+    font-size: 11.5px; font-weight: 600;
+}
+.unsaved-discard {
+    border: none; border-radius: 999px; cursor: pointer;
+    height: 22px; padding: 0 8px; font-size: 11px; font-weight: 700;
+    background: var(--warning); color: #fff; transition: filter 0.15s;
+}
+.unsaved-discard:hover { filter: brightness(0.92); }
 
 .switch { position: relative; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; font-size: 13px; font-weight: 500; }
 .switch input {
@@ -1733,6 +1746,18 @@ input:focus, select:focus, textarea:focus { border-color: var(--border-focus); b
 }
 .modal-dialog.wide { max-width: 900px; }
 .modal-dialog.narrow { max-width: 520px; }
+.modal-dialog.confirm-dialog { max-width: 420px; }
+.confirm-icon {
+    width: 34px; height: 34px; border-radius: 10px;
+    background: var(--danger-soft); color: var(--danger);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.confirm-target {
+    font-size: 12px; color: var(--text-muted);
+    background: var(--surface-alt); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 10px; max-height: 80px;
+    overflow: hidden; overflow-wrap: anywhere; word-break: break-all;
+}
 .modal-header { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .modal-header h3 { margin: 0; font-size: 16px; font-weight: 700; }
 .modal-body { padding: 18px; overflow-y: auto; flex: 1; overscroll-behavior: contain; }
@@ -1820,7 +1845,7 @@ html.dark .toast-info { background: #1e3a8a; color: #bfdbfe; border-color: #1d4e
                 </div>
             </div>
             <div class="header-actions">
-                <span id="unsaved-pill" class="badge badge-warning hidden">Unsaved Changes</span>
+                <div id="unsaved-pill" class="unsaved-pill hidden"><span>Unsaved Changes</span><button id="discard-btn" class="unsaved-discard" type="button" onclick="discardChanges()" title="Discard unsaved changes">Discard</button></div>
                 <button id="update-badge-btn" class="btn btn-sm update-badge hidden" type="button" onclick="openUpdateModal()" title="New update available">
                     <span class="update-dot"></span>
                     <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16V8m0 0l-3.5 3.5M12 8l3.5 3.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -2502,6 +2527,29 @@ html.dark .toast-info { background: #1e3a8a; color: #bfdbfe; border-color: #1d4e
     </div>
 </div>
 
+<!-- Confirm Delete Modal -->
+<div id="confirm-modal" class="modal-backdrop hidden">
+    <div class="modal-dialog confirm-dialog">
+        <div class="modal-header">
+            <div style="display:flex; align-items:center; gap:10px; min-width:0;">
+                <div class="confirm-icon">
+                    <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </div>
+                <h3 id="cfm-title">Confirm Delete</h3>
+            </div>
+            <button class="btn btn-sm btn-icon" type="button" onclick="resolveConfirm(false)">&#10005;</button>
+        </div>
+        <div class="modal-body" style="padding: 16px 18px;">
+            <p id="cfm-message" style="margin:0 0 10px; font-size:13.5px; color:var(--text);"></p>
+            <div id="cfm-target" class="confirm-target mono hidden"></div>
+        </div>
+        <div class="modal-footer">
+            <button id="cfm-cancel-btn" class="btn" type="button" onclick="resolveConfirm(false)">Cancel</button>
+            <button id="cfm-ok-btn" class="btn btn-danger" style="background: var(--danger); color: #fff;" type="button" onclick="resolveConfirm(true)">Delete</button>
+        </div>
+    </div>
+</div>
+
 <script>
 const ADMIN_PATH = ${safeAdminPath};
 const APP_VERSION = ${safeVersion};
@@ -2535,6 +2583,7 @@ function classifyPoolItem(item) {
 }
 
 let state = null;
+let savedSnapshot = null;
 let dirty = false;
 let editingSubIdx = -1;
 let editingServerIdx = -1;
@@ -2608,6 +2657,45 @@ function closeModal(id) {
     if (el) el.classList.add('hidden');
     syncBodyScrollLock();
 }
+
+let confirmResolver = null;
+
+function confirmDelete(title, message, targetPreview = '', confirmLabel = 'Delete') {
+    return new Promise(resolve => {
+        confirmResolver = resolve;
+        document.getElementById('cfm-title').textContent = title || 'Confirm Delete';
+        document.getElementById('cfm-message').textContent = message || 'Are you sure you want to delete this item?';
+        document.getElementById('cfm-ok-btn').textContent = confirmLabel;
+        const tgt = document.getElementById('cfm-target');
+        if (targetPreview) {
+            tgt.textContent = targetPreview;
+            tgt.classList.remove('hidden');
+        } else {
+            tgt.textContent = '';
+            tgt.classList.add('hidden');
+        }
+        openModal('confirm-modal');
+        setTimeout(() => document.getElementById('cfm-cancel-btn').focus(), 30);
+    });
+}
+
+window.resolveConfirm = (result) => {
+    closeModal('confirm-modal');
+    if (confirmResolver) {
+        const fn = confirmResolver;
+        confirmResolver = null;
+        fn(result);
+    }
+};
+
+document.getElementById('confirm-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'confirm-modal') resolveConfirm(false);
+});
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !document.getElementById('confirm-modal').classList.contains('hidden')) {
+        resolveConfirm(false);
+    }
+});
 
 function refreshExpandedHeight(id) {
     const tx = document.getElementById(id);
@@ -2930,8 +3018,11 @@ window.duplicateSub = (idx) => {
     renderSubscriptions();
 };
 
-window.deleteSub = (idx) => {
-    if (!confirm('Delete subscription "' + state.subscriptions[idx].name + '"?')) return;
+window.deleteSub = async (idx) => {
+    const sub = state.subscriptions[idx];
+    if (!sub) return;
+    const ok = await confirmDelete('Delete Subscription', 'This subscription profile will be removed from your configuration.', sub.name + ' (' + sub.path + ')');
+    if (!ok) return;
     state.subscriptions.splice(idx, 1);
     markDirty(true);
     updateCounts();
@@ -3022,9 +3113,20 @@ window.addSourceItem = (kind) => {
     }
 };
 
-window.deleteSourceItem = (kind, idx) => {
-    if (kind === 'custom') state.customServers.splice(idx, 1);
-    else state.defaultSublink.splice(idx, 1);
+window.deleteSourceItem = async (kind, idx) => {
+    const arr = kind === 'custom' ? state.customServers : state.defaultSublink;
+    const val = (arr[idx] || '').trim();
+    if (val) {
+        const label = kind === 'custom' ? 'Delete Custom Server' : 'Delete Subscription Link';
+        let preview = val;
+        if (kind === 'custom') {
+            const p = parseServerLink(val);
+            if (p) preview = (p.protocol ? p.protocol.toUpperCase() + ' · ' : '') + (p.name || p.host || p.address || val);
+        }
+        const ok = await confirmDelete(label, 'Remove this entry from Input Sources?', preview);
+        if (!ok) return;
+    }
+    arr.splice(idx, 1);
     markDirty(true);
     updateCounts();
     renderSources();
@@ -3220,9 +3322,13 @@ window.savePresetModal = () => {
     closeModal('preset-modal');
 };
 
-window.deletePreset = (kind, idx) => {
+window.deletePreset = async (kind, idx) => {
     const list = kind === 'fm' ? state.fmPresets : state.csPresets;
-    if (!confirm('Delete preset "' + list[idx].name + '"?')) return;
+    const item = list[idx];
+    if (!item) return;
+    const label = kind === 'fm' ? 'Delete Final Mask Preset' : 'Delete Cipher Suite Preset';
+    const ok = await confirmDelete(label, 'Are you sure you want to delete this preset?', item.name);
+    if (!ok) return;
     list.splice(idx, 1);
     markDirty(true);
     updateCounts();
@@ -3632,14 +3738,29 @@ async function loadConfig() {
     }
     if (!res.ok) throw new Error('Failed to load config');
     state = await res.json();
+    savedSnapshot = JSON.stringify(state);
+    applyStateToUi();
+    checkForUpdates(false);
+}
+
+function applyStateToUi() {
+    document.getElementById('cfg-newPassword').value = '';
     updateCounts();
     renderSubscriptions();
     renderSources();
     renderNetworkAndSettings();
     renderPresets();
     markDirty(false);
-    checkForUpdates(false);
 }
+
+window.discardChanges = async () => {
+    if (!dirty || !savedSnapshot) return;
+    const ok = await confirmDelete('Discard Unsaved Changes', 'All unsaved edits across all tabs will be reverted to the last saved state.', '', 'Discard');
+    if (!ok) return;
+    state = JSON.parse(savedSnapshot);
+    applyStateToUi();
+    toast('Unsaved changes discarded', 'info');
+};
 
 function escapeHtml(s) {
     return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -3754,7 +3875,12 @@ async function saveAll() {
         });
         if (!res.ok) throw new Error(await res.text());
         const data = await res.json();
+        state.customServers = payload.customServers;
+        state.defaultSublink = payload.defaultSublink;
+        savedSnapshot = JSON.stringify(state);
         document.getElementById('cfg-newPassword').value = '';
+        updateCounts();
+        renderSources();
         markDirty(false);
         toast('All settings saved to Cloudflare KV!');
         if (data.adminPath && data.adminPath !== ADMIN_PATH) {
