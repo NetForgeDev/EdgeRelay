@@ -22,9 +22,22 @@ jobs:
 
       - name: Extract tag release notes
         id: notes
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           TAG="${GITHUB_REF_NAME}"
-          NOTES=$(git for-each-ref "refs/tags/${TAG}" --format='%(contents)' | sed '/^-----BEGIN PGP SIGNATURE-----$/,$d')
+          git fetch --tags --force
+          NOTES=""
+          if [ "$(git cat-file -t "refs/tags/${TAG}" 2>/dev/null)" = "tag" ]; then
+            NOTES=$(git for-each-ref "refs/tags/${TAG}" --format='%(contents)' | sed '/^-----BEGIN PGP SIGNATURE-----$/,$d')
+          fi
+          if [ -z "$(printf '%s' "$NOTES" | tr -d '[:space:]')" ]; then
+            REF_TYPE=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${TAG}" --jq '.object.type' 2>/dev/null || true)
+            if [ "$REF_TYPE" = "tag" ]; then
+              TAG_SHA=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${TAG}" --jq '.object.sha')
+              NOTES=$(gh api "repos/${GITHUB_REPOSITORY}/git/tags/${TAG_SHA}" --jq '.message' | sed '/^-----BEGIN PGP SIGNATURE-----$/,$d')
+            fi
+          fi
           if [ -n "$(printf '%s' "$NOTES" | tr -d '[:space:]')" ]; then
             printf '%s\n' "$NOTES" > release_notes.txt
             echo "has_notes=true" >> "$GITHUB_OUTPUT"
