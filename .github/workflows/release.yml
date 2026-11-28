@@ -1,0 +1,44 @@
+name: Auto Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prepare release assets
+        run: cp worker.js _worker.js
+
+      - name: Extract tag release notes
+        id: notes
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          NOTES=$(git for-each-ref "refs/tags/${TAG}" --format='%(contents)' | sed '/^-----BEGIN PGP SIGNATURE-----$/,$d')
+          if [ -n "$(printf '%s' "$NOTES" | tr -d '[:space:]')" ]; then
+            printf '%s\n' "$NOTES" > release_notes.txt
+            echo "has_notes=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_notes=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          if [ "${{ steps.notes.outputs.has_notes }}" = "true" ]; then
+            gh release create "$TAG" worker.js _worker.js --title "$TAG" --notes-file release_notes.txt
+          else
+            gh release create "$TAG" worker.js _worker.js --title "$TAG" --generate-notes
+          fi
